@@ -11,11 +11,16 @@ $users = $stmt->fetchAll();
 if(isset($_POST['update_role'])) {
     $user_id = $_POST['user_id'];
     $new_role = $_POST['role'];
-    
+    // Ngăn người dùng tự hạ role của chính họ
+    if(isset($_SESSION['user_id']) && $user_id == $_SESSION['user_id']) {
+        echo "<script>alert('Bạn không thể thay đổi vai trò của chính mình.'); window.location.href = 'manage_users.php';</script>";
+        exit;
+    }
+
     $sql = "UPDATE users SET role = ? WHERE id = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$new_role, $user_id]);
-    
+
     echo "<script>alert('Cập nhật role thành công!'); window.location.reload();</script>";
 }
 ?>
@@ -115,15 +120,22 @@ if(isset($_POST['update_role'])) {
                                         </td>
                                         <td><?php echo date('d/m/Y', strtotime($user['created_at'])); ?></td>
                                         <td>
-                                            <form method="POST" class="d-inline">
-                                                <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
-                                                <select name="role" class="form-select form-select-sm" onchange="this.form.submit()">
-                                                    <option value="student" <?php echo $user['role'] == 'student' ? 'selected' : ''; ?>>Học sinh</option>
-                                                    <option value="teacher" <?php echo $user['role'] == 'teacher' ? 'selected' : ''; ?>>Giáo viên</option>
-                                                    <option value="admin" <?php echo $user['role'] == 'admin' ? 'selected' : ''; ?>>Quản trị</option>
-                                                </select>
-                                                <input type="hidden" name="update_role" value="1">
-                                            </form>
+                                            <?php if($user['id'] == $_SESSION['user_id']): ?>
+                                                <div class="d-flex flex-column">
+                                                    <span class="badge bg-secondary"><?php echo $user['role']; ?></span>
+                                                    <small class="text-muted">Không thể thay đổi vai trò của chính bạn</small>
+                                                </div>
+                                            <?php else: ?>
+                                                <form method="POST" class="d-inline">
+                                                    <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
+                                                    <select name="role" class="form-select form-select-sm" onchange="this.form.submit()">
+                                                        <option value="student" <?php echo $user['role'] == 'student' ? 'selected' : ''; ?>>Học sinh</option>
+                                                        <option value="teacher" <?php echo $user['role'] == 'teacher' ? 'selected' : ''; ?>>Giáo viên</option>
+                                                        <option value="admin" <?php echo $user['role'] == 'admin' ? 'selected' : ''; ?>>Quản trị</option>
+                                                    </select>
+                                                    <input type="hidden" name="update_role" value="1">
+                                                </form>
+                                            <?php endif; ?>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>
