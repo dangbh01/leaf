@@ -8,9 +8,28 @@ chmod -R 755 /var/www/html/uploads || true
 
 # Wait for MySQL to be ready
 echo "Waiting for MySQL..."
-while ! mysqladmin ping -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" --silent; do
-    sleep 1
+echo "DB_HOST=$DB_HOST"
+echo "DB_PORT=$DB_PORT"
+echo "DB_USER=$DB_USER"
+echo "DB_NAME=$DB_NAME"
+
+# Try to wait for MySQL with timeout
+MAX_RETRIES=30
+RETRY_COUNT=0
+
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    if mysqladmin ping -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" --silent 2>/dev/null; then
+        echo "✅ MySQL is ready!"
+        break
+    fi
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    echo "Attempt $RETRY_COUNT/$MAX_RETRIES - waiting for MySQL..."
+    sleep 2
 done
+
+if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+    echo "⚠️ WARNING: MySQL not responding after $MAX_RETRIES attempts, but continuing anyway..."
+fi
 
 # Import schema if tables don't exist
 echo "Checking database schema..."
