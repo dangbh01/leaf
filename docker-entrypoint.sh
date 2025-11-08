@@ -28,19 +28,43 @@ echo "DB_NAME=$DB_NAME"
 sleep 5
 echo "✅ Proceeding with database connection..."
 
-# Import schema if tables don't exist
-echo "Checking database schema..."
-TABLES=$(mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" -D"$DB_NAME" -e "SHOW TABLES;" 2>/dev/null)
-if [ $? -eq 0 ] && [ -z "$TABLES" ]; then
-    echo "Importing schema..."
-    mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" < /var/www/html/schema.sql
+# Import schema using PHP instead of mysql command
+echo "Setting up database schema..."
+php -r "
+\$mysql_url = getenv('MYSQL_URL');
+if (\$mysql_url) {
+    \$url_parts = parse_url(\$mysql_url);
+    \$host = \$url_parts['host'] ?? 'localhost';
+    \$port = \$url_parts['port'] ?? '3306';
+    \$dbname = ltrim(\$url_parts['path'] ?? '/railway', '/');
+    \$username = \$url_parts['user'] ?? 'root';
+    \$password = \$url_parts['pass'] ?? '';
     
-    # Seed admin user after importing schema
-    echo "Creating admin user..."
-    php /var/www/html/seed_admin.php || echo "⚠️ Admin user creation failed or already exists"
-else
-    echo "✅ Database tables already exist, skipping schema import"
-fi
+    try {
+        \$dsn = \"mysql:host={\$host};port={\$port};dbname={\$dbname};charset=utf8mb4\";
+        \$pdo = new PDO(\$dsn, \$username, \$password);
+        \$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
+        // Check if tables exist
+        \$tables = \$pdo->query('SHOW TABLES')->fetchAll();
+        if (empty(\$tables)) {
+            echo \"Importing schema...\n\";
+            \$schema = file_get_contents('/var/www/html/schema.sql');
+            \$pdo->exec(\$schema);
+            echo \"✅ Schema imported successfully\n\";
+            
+            // Run seed_admin.php
+            echo \"Creating admin user...\n\";
+            include '/var/www/html/seed_admin.php';
+        } else {
+            echo \"✅ Database tables already exist\n\";
+        }
+    } catch (Exception \$e) {
+        echo \"⚠️ Database setup error: \" . \$e->getMessage() . \"\n\";
+        echo \"Will retry when Apache starts...\n\";
+    }
+}
+"
 
 # If a command is provided, run it; otherwise default to apache foreground
 if [ "$#" -gt 0 ]; then
