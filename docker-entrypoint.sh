@@ -18,6 +18,12 @@ TABLES=$(mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" -D"$DB_NAME" -e "SHOW TABL
 if [ $? -eq 0 ] && [ -z "$TABLES" ]; then
     echo "Importing schema..."
     mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" < /var/www/html/schema.sql
+    
+    # Seed admin user after importing schema
+    echo "Creating admin user..."
+    php /var/www/html/seed_admin.php || echo "⚠️ Admin user creation failed or already exists"
+else
+    echo "✅ Database tables already exist, skipping schema import"
 fi
 
 # If a command is provided, run it; otherwise default to apache foreground
