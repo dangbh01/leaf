@@ -1,9 +1,10 @@
 FROM php:8.1-apache
 
-# Install extensions
+# Install extensions and MySQL client
 RUN apt-get update && apt-get install -y \
     libzip-dev \
     unzip \
+    default-mysql-client \
     && docker-php-ext-install pdo pdo_mysql
 
 # Enable apache rewrite
