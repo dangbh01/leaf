@@ -6,6 +6,17 @@ mkdir -p /var/www/html/uploads/posts
 chown -R www-data:www-data /var/www/html/uploads || true
 chmod -R 755 /var/www/html/uploads || true
 
+# Parse MySQL connection info from MYSQL_URL or use individual vars
+if [ -n "$MYSQL_URL" ]; then
+    echo "Using MYSQL_URL for connection..."
+    # Extract from mysql://user:pass@host:port/dbname
+    DB_HOST=$(echo $MYSQL_URL | sed -E 's|mysql://[^:]+:[^@]+@([^:]+):.*|\1|')
+    DB_PORT=$(echo $MYSQL_URL | sed -E 's|mysql://[^:]+:[^@]+@[^:]+:([0-9]+)/.*|\1|')
+    DB_USER=$(echo $MYSQL_URL | sed -E 's|mysql://([^:]+):.*|\1|')
+    DB_PASS=$(echo $MYSQL_URL | sed -E 's|mysql://[^:]+:([^@]+)@.*|\1|')
+    DB_NAME=$(echo $MYSQL_URL | sed -E 's|mysql://[^/]+/(.*)|\1|')
+fi
+
 # Wait for MySQL to be ready
 echo "Waiting for MySQL..."
 echo "DB_HOST=$DB_HOST"

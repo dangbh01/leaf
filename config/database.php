@@ -1,10 +1,23 @@
 <?php
-// Use environment variables when available (for Render or other platforms)
-$host = getenv('DB_HOST') ?: 'localhost';
-$port = getenv('DB_PORT') ?: '3306';
-$dbname = getenv('DB_NAME') ?: 'traodododung_db';
-$username = getenv('DB_USER') ?: 'root';
-$password = getenv('DB_PASS') ?: '';
+// Railway MySQL connection support
+$mysql_url = getenv('MYSQL_URL');
+
+if ($mysql_url) {
+    // Parse Railway MYSQL_URL: mysql://user:pass@host:port/dbname
+    $url_parts = parse_url($mysql_url);
+    $host = $url_parts['host'] ?? 'localhost';
+    $port = $url_parts['port'] ?? '3306';
+    $dbname = ltrim($url_parts['path'] ?? '/traodododung_db', '/');
+    $username = $url_parts['user'] ?? 'root';
+    $password = $url_parts['pass'] ?? '';
+} else {
+    // Use individual environment variables (for local dev or other platforms)
+    $host = getenv('DB_HOST') ?: 'localhost';
+    $port = getenv('DB_PORT') ?: '3306';
+    $dbname = getenv('DB_NAME') ?: 'traodododung_db';
+    $username = getenv('DB_USER') ?: 'root';
+    $password = getenv('DB_PASS') ?: '';
+}
 
 // Build DSN including port if provided
 $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
