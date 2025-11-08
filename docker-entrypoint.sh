@@ -1,6 +1,13 @@
 #!/bin/bash
 set -e
 
+# Configure Apache to listen on Railway's PORT (default 80)
+if [ -n "$PORT" ]; then
+    echo "Configuring Apache to listen on port $PORT..."
+    sed -i "s/Listen 80/Listen ${PORT}/g" /etc/apache2/ports.conf
+    sed -i "s/:80/:${PORT}/g" /etc/apache2/sites-available/000-default.conf
+fi
+
 # Ensure uploads directory exists and is writable
 mkdir -p /var/www/html/uploads/posts
 chown -R www-data:www-data /var/www/html/uploads || true

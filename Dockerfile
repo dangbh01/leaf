@@ -11,8 +11,6 @@ RUN apt-get update && apt-get install -y \
 RUN a2enmod rewrite
 
 # Copy application
-
-# Copy application
 COPY . /var/www/html/
 
 # Copy entrypoint and make executable
