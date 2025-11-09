@@ -4,7 +4,7 @@
 Railway.app là platform miễn phí hỗ trợ deploy ứng dụng Docker với MySQL built-in. Miễn phí **500 giờ/tháng** và domain HTTPS tự động.
 
 **⏱️ Thời gian:** 10-15 phút  
-**💰 Chi phí:** MIỄN PHÍ  
+**💰 Chi phí:** MIỄN PHÍ (500 giờ/tháng)
 **🌐 Domain:** `https://leaf-production-xxxx.up.railway.app`
 
 ---
@@ -13,7 +13,7 @@ Railway.app là platform miễn phí hỗ trợ deploy ứng dụng Docker với
 
 1. ✅ **Tài khoản GitHub** (để đăng nhập Railway)
 2. ✅ **Code đã push lên GitHub repository**
-3. ✅ **Tài khoản Railway** (đăng ký miễn phí bằng GitHub)
+3. ✅ **Tài khoản Railway** (đăng ký miễn phí bằng GitHub tại https://railway.app)
 
 ---
 
@@ -23,12 +23,13 @@ Railway.app là platform miễn phí hỗ trợ deploy ứng dụng Docker với
 
 Đảm bảo repo của bạn có các file sau:
 ```
-✅ Dockerfile
-✅ docker-compose.yml (không bắt buộc, Railway chỉ dùng Dockerfile)
-✅ docker-entrypoint.sh
-✅ schema.sql
-✅ config/database.php
-✅ seed_admin.php
+✅ Dockerfile                  # Build PHP 8.1 + Apache + MySQL client
+✅ docker-compose.yml          # Local development (Railway không dùng)
+✅ docker-entrypoint.sh        # Auto setup DB schema & admin
+✅ schema.sql                  # Database tables definition
+✅ config/database.php         # Hỗ trợ MYSQL_URL và biến riêng
+✅ seed_admin.php              # Script tạo admin từ env vars
+✅ .env.example                # Mẫu environment variables
 ```
 
 ### 1.2. Push code lên GitHub (nếu chưa có)
@@ -90,13 +91,14 @@ git push origin main
 **🎉 Railway sẽ tự động:**
 - Tạo MySQL container
 - Tạo database với thông tin kết nối
-- Tạo sẵn các biến môi trường
+- Tạo sẵn các biến môi trường (bao gồm `MYSQL_URL`)
 
 ### 3.2. Lấy thông tin Database
 
 1. Click vào **MySQL** service trong dashboard
 2. Chuyển sang tab **"Variables"**
 3. Bạn sẽ thấy các biến:
+   - `MYSQL_URL` (format: `mysql://user:pass@host:port/dbname`) ⭐ **Khuyến nghị**
    - `MYSQL_HOST`
    - `MYSQL_PORT` (3306)
    - `MYSQL_DATABASE`
@@ -104,7 +106,9 @@ git push origin main
    - `MYSQL_PASSWORD`
    - `MYSQL_ROOT_PASSWORD`
 
-**📝 Ghi chú:** Bạn không cần copy, Railway tự động share biến này giữa các service.
+**📝 Ghi chú:** 
+- Bạn không cần copy, Railway tự động share biến này giữa các service
+- Code hỗ trợ cả 2 cách: `MYSQL_URL` hoặc biến riêng lẻ
 
 **✅ Checkpoint:** MySQL service đã chạy (màu xanh)
 
@@ -119,26 +123,12 @@ git push origin main
 
 ### 4.2. Thêm biến môi trường
 
-Click **"New Variable"** và thêm **CHÍNH XÁC** như sau:
+Click **"New Variable"** và thêm theo một trong hai cách:
 
-#### 🔗 Database Connection (dùng reference từ MySQL)
-
-```
-DB_HOST = ${{MySQL.MYSQL_HOST}}
-DB_PORT = ${{MySQL.MYSQL_PORT}}
-DB_NAME = ${{MySQL.MYSQL_DATABASE}}
-DB_USER = ${{MySQL.MYSQL_USER}}
-DB_PASS = ${{MySQL.MYSQL_PASSWORD}}
-```
-
-**⚠️ LƯU Ý:** 
-- Gõ **CHÍNH XÁC** `${{MySQL.MYSQL_HOST}}` (không phải value thật)
-- Railway sẽ tự động thay thế bằng giá trị thật
-- Nếu MySQL service tên khác, thay `MySQL` bằng tên đó
-
-#### 👑 Admin Account
+#### 🌟 CÁCH 1: Sử dụng MYSQL_URL (KHUYẾN NGHỊ - Đơn giản hơn)
 
 ```
+MYSQL_URL = ${{MySQL.MYSQL_URL}}
 ADMIN_USER = admin
 ADMIN_PASS = YourSecurePassword123!
 ADMIN_EMAIL = admin@youremail.com
@@ -146,21 +136,44 @@ ADMIN_FULL_NAME = Administrator
 ADMIN_PHONE = 0987654321
 ```
 
-**⚠️ QUAN TRỌNG:** Thay `YourSecurePassword123!` bằng mật khẩu mạnh của bạn!
+**✅ Ưu điểm:** 
+- Chỉ cần 1 biến database thay vì 5
+- `config/database.php` tự động parse format `mysql://user:pass@host:port/dbname`
+- Railway format chuẩn
+
+#### 🔗 CÁCH 2: Sử dụng biến riêng lẻ (Tương thích local dev)
+
+```
+DB_HOST = ${{MySQL.MYSQL_HOST}}
+DB_PORT = ${{MySQL.MYSQL_PORT}}
+DB_NAME = ${{MySQL.MYSQL_DATABASE}}
+DB_USER = ${{MySQL.MYSQL_USER}}
+DB_PASS = ${{MySQL.MYSQL_PASSWORD}}
+ADMIN_USER = admin
+ADMIN_PASS = YourSecurePassword123!
+ADMIN_EMAIL = admin@youremail.com
+ADMIN_FULL_NAME = Administrator
+ADMIN_PHONE = 0987654321
+```
+
+**⚠️ LƯU Ý QUAN TRỌNG:** 
+- Gõ **CHÍNH XÁC** `${{MySQL.MYSQL_URL}}` hoặc `${{MySQL.MYSQL_HOST}}` (Railway sẽ tự động thay thế bằng giá trị thật)
+- Nếu MySQL service tên khác, thay `MySQL` bằng tên đó
+- **Thay `YourSecurePassword123!` bằng mật khẩu mạnh của bạn!**
 
 ### 4.3. Kiểm tra lại
 
-Đảm bảo bạn có **ít nhất 9 biến**:
-- ✅ DB_HOST
-- ✅ DB_PORT
-- ✅ DB_NAME
-- ✅ DB_USER
-- ✅ DB_PASS
+**Nếu dùng MYSQL_URL:** Cần **6 biến**
+- ✅ MYSQL_URL
 - ✅ ADMIN_USER
 - ✅ ADMIN_PASS
 - ✅ ADMIN_EMAIL
 - ✅ ADMIN_FULL_NAME (optional nhưng nên có)
 - ✅ ADMIN_PHONE (optional)
+
+**Nếu dùng biến riêng:** Cần **10 biến**
+- ✅ DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS
+- ✅ ADMIN_USER, ADMIN_PASS, ADMIN_EMAIL, ADMIN_FULL_NAME, ADMIN_PHONE
 
 **✅ Checkpoint:** Tất cả biến đã được thêm vào
 
@@ -170,74 +183,79 @@ ADMIN_PHONE = 0987654321
 
 ### 5.1. Trigger Redeploy
 
-1. Vẫn ở tab **"Deployments"** của service leaf
-2. Click vào deployment mới nhất
-3. Click **"Redeploy"** (hoặc Railway sẽ tự động redeploy khi thêm biến)
+1. Vẫn ở service **"leaf"**
+2. Chuyển sang tab **"Deployments"**
+3. Click vào deployment mới nhất (hoặc Railway sẽ tự động redeploy khi thêm biến)
 
 ### 5.2. Xem Log để kiểm tra
 
 1. Click vào deployment đang chạy
 2. Xem tab **"Deploy Logs"**
 
-**Kiểm tra các log sau:**
+**Kiểm tra các log quan trọng:**
 
 ```
-✅ "Waiting for MySQL..." 
-✅ "Checking database schema..."
-✅ "Importing schema..." (lần đầu tiên)
-✅ "AH00558: apache2: Could not reliably determine..." (OK, không sao)
+✅ "Waiting for MySQL to initialize..."
+✅ "DB_HOST=xxxx" (hoặc parsing MYSQL_URL)
+✅ "✅ Proceeding with database connection..."
+✅ "Setting up database schema..."
+✅ "Importing schema..." (lần đầu tiên) hoặc "✅ Database tables already exist"
+✅ "✅ Schema imported successfully"
+✅ "Creating admin user..."
+✅ "✅ Admin user created successfully!"
+```
+
+**Có thể thấy warning (bình thường, không sao):**
+```
+⚠️ "AH00558: apache2: Could not reliably determine the server's fully qualified domain name"
 ```
 
 **❌ Nếu thấy lỗi:**
-- `Connection refused` → MySQL chưa sẵn sàng, đợi thêm
-- `Access denied` → Sai DB_USER hoặc DB_PASS
+- `Connection refused` → MySQL chưa sẵn sàng, đợi thêm 1-2 phút
+- `Access denied` → Sai DB_USER hoặc DB_PASS hoặc MYSQL_URL
+- `Database setup error` → Kiểm tra schema.sql, có thể retry sau
+- `ADMIN_USER is required` → Thiếu biến môi trường admin
 
-**✅ Checkpoint:** Log cho thấy schema đã import thành công
+**✅ Checkpoint:** Log cho thấy schema đã import và admin đã tạo thành công
 
 ---
 
-## 🚀 BƯỚC 6: Import Database Schema & Tạo Admin
+## 🚀 BƯỚC 6: Database Schema & Admin User
 
-### 6.1. Option A: Tự động (đã cấu hình sẵn)
+### 6.1. Tự động Setup (Khuyến nghị - Đã cấu hình sẵn)
 
-Script `docker-entrypoint.sh` sẽ **tự động import** `schema.sql` khi:
-- Database trống (chưa có bảng)
-- Service khởi động lần đầu
+Script `docker-entrypoint.sh` sẽ **TỰ ĐỘNG**:
 
-**Chỉ cần đợi deploy xong là OK!**
+1. **Import schema.sql** khi:
+   - Database trống (chưa có bảng)
+   - Service khởi động lần đầu
 
-### 6.2. Option B: Thủ công (nếu cần)
+2. **Tạo admin user** từ environment variables khi:
+   - Schema đã được import thành công
+   - Admin chưa tồn tại trong database
 
-**Nếu muốn import thủ công:**
+**Logic trong docker-entrypoint.sh:**
+```bash
+# Parse MYSQL_URL nếu có, fallback sang biến riêng
+# Đợi MySQL sẵn sàng (sleep 5s)
+# Check tables exist
+# Nếu trống → import schema.sql và run seed_admin.php
+# Nếu đã có tables → skip
+```
 
+**✅ Chỉ cần đợi deploy xong là OK!** Kiểm tra Deploy Logs để confirm.
+
+### 6.2. Troubleshooting: Import thủ công (nếu cần)
+
+**Nếu auto import không chạy:**
+
+#### Option A: Via Railway MySQL Data Tab
 1. Click vào **MySQL service**
 2. Tab **"Data"** → click **"Query"**
-3. Copy nội dung file `schema.sql` và paste vào
-4. Click **"Run Query"**
+3. Copy nội dung file `schema.sql` từ repo
+4. Paste vào query editor và click **"Run Query"**
 
-### 6.3. Tạo Admin User
-
-**Cách 1: Tự động khi deploy (KHUYẾN NGHỊ)**
-
-Thêm vào cuối file `docker-entrypoint.sh`:
-
-```bash
-# Seed admin user if not exists
-echo "Creating admin user..."
-php /var/www/html/seed_admin.php || echo "Admin already exists or error occurred"
-```
-
-Sau đó commit & push:
-```bash
-git add docker-entrypoint.sh
-git commit -m "Auto seed admin on deploy"
-git push
-```
-
-Railway sẽ tự động redeploy.
-
-**Cách 2: Thủ công qua Railway CLI**
-
+#### Option B: Via Railway CLI
 ```bash
 # Install Railway CLI
 npm i -g @railway/cli
@@ -248,14 +266,29 @@ railway login
 # Link project
 railway link
 
-# Run seed
-railway run php seed_admin.php
+# Connect to MySQL và import
+railway connect MySQL
+# Sau đó trong MySQL prompt:
+source /path/to/schema.sql
 ```
 
-**Cách 3: Thủ công qua MySQL Query**
+### 6.3. Kiểm tra Admin User
 
-Vào MySQL Data tab, chạy:
+**Xem log để confirm:**
+```
+✅ Admin user created successfully!
+   Username: admin
+   Password: YourSecurePassword123!
+```
 
+**Nếu không thấy trong log, check database:**
+1. Vào MySQL service → Data tab
+2. Chạy query:
+```sql
+SELECT id, username, email, role FROM users WHERE role='admin';
+```
+
+**Nếu admin chưa tồn tại, tạo thủ công:**
 ```sql
 INSERT INTO users (username, password, email, full_name, phone, role)
 VALUES (
@@ -267,10 +300,9 @@ VALUES (
   'admin'
 );
 ```
+**⚠️ Hash trên là password `password`, nhớ đổi sau khi login!**
 
-**⚠️ Lưu ý:** Hash trên là password `password`, nhớ đổi sau khi login!
-
-**✅ Checkpoint:** Admin user đã được tạo
+**✅ Checkpoint:** Admin user đã được tạo và có thể login
 
 ---
 
@@ -324,56 +356,123 @@ https://leaf-production-xxxx.up.railway.app
 
 ## 🔧 Troubleshooting
 
-### ❌ Lỗi "Connection refused"
+### ❌ Lỗi "Connection refused" hoặc "Can't connect to MySQL"
 
 **Nguyên nhân:** MySQL chưa sẵn sàng hoặc biến môi trường sai
 
 **Giải pháp:**
-1. Kiểm tra MySQL service đã chạy (màu xanh)
-2. Kiểm tra biến `DB_HOST`, `DB_USER`, `DB_PASS` đúng format `${{MySQL.XXX}}`
-3. Redeploy web service
+1. Kiểm tra MySQL service đã chạy (màu xanh) trong Railway dashboard
+2. Kiểm tra biến `MYSQL_URL` hoặc `DB_HOST`, `DB_USER`, `DB_PASS` đúng format reference: `${{MySQL.MYSQL_URL}}`
+3. Đợi thêm 1-2 phút để MySQL khởi động hoàn toàn (Railway internal networking cần thời gian)
+4. Redeploy web service (Click vào deployment → Redeploy)
 
 ### ❌ Lỗi "Access denied for user"
 
-**Nguyên nhân:** Biến DB_USER hoặc DB_PASS sai
+**Nguyên nhân:** Biến database credentials sai
 
 **Giải pháp:**
 1. Vào MySQL service → tab Variables
-2. Copy chính xác `MYSQL_USER` và `MYSQL_PASSWORD`
-3. Paste vào DB_USER và DB_PASS của web service
-4. Hoặc dùng reference: `${{MySQL.MYSQL_USER}}`
+2. Copy chính xác `MYSQL_URL` hoặc các biến riêng lẻ
+3. Paste vào biến của web service với format reference: `${{MySQL.MYSQL_URL}}`
+4. **Không paste raw value**, dùng reference để Railway tự động sync
+
+### ❌ Schema không được import
+
+**Nguyên nhân:** 
+- Database đã có tables từ lần deploy trước
+- Script docker-entrypoint.sh gặp lỗi
+
+**Giải pháp:**
+1. Xem Deploy Logs, tìm "Importing schema..." hoặc "Database tables already exist"
+2. Nếu không thấy, check file `schema.sql` có trong repo
+3. Import thủ công qua MySQL Data tab (copy paste nội dung schema.sql)
+4. Hoặc xóa database và redeploy (⚠️ mất data)
+
+### ❌ Admin user không được tạo
+
+**Nguyên nhân:**
+- Thiếu biến `ADMIN_USER`, `ADMIN_PASS`, `ADMIN_EMAIL`
+- Admin đã tồn tại từ trước
+- Script seed_admin.php bị lỗi
+
+**Giải pháp:**
+1. Kiểm tra Deploy Logs, tìm "Creating admin user..." và "✅ Admin user created successfully!"
+2. Nếu thấy "Admin already exists", dùng mật khẩu trong `ADMIN_PASS` để login
+3. Nếu thấy lỗi "ADMIN_USER is required", thêm biến môi trường và redeploy
+4. Check database:
+   ```sql
+   SELECT username, email, role FROM users WHERE role='admin';
+   ```
+5. Nếu không có, insert thủ công hoặc fix biến env và redeploy
 
 ### ❌ Upload ảnh bị lỗi
 
-**Nguyên nhân:** Thư mục uploads không có quyền write
+**Nguyên nhân:** 
+- Thư mục uploads không có quyền write
+- Persistent volume chưa được mount
 
 **Giải pháp:**
-Kiểm tra `docker-entrypoint.sh` có đoạn:
-```bash
-mkdir -p /var/www/html/uploads/posts
-chown -R www-data:www-data /var/www/html/uploads
-chmod -R 755 /var/www/html/uploads
-```
+1. Kiểm tra Deploy Logs có đoạn:
+   ```
+   Ensure uploads directory exists and is writable
+   ```
+2. Railway tự động mount persistent volume cho `/var/www/html/uploads`
+3. Thử upload lại sau khi deploy hoàn toàn
+4. Check file permissions trong logs
+
+### ❌ Ảnh upload không hiển thị
+
+**Nguyên nhân:**
+- Đường dẫn ảnh sai
+- Ảnh bị mất sau redeploy (nếu không dùng persistent volume)
+
+**Giải pháp:**
+1. Railway tự động persist `/var/www/html/uploads`
+2. Check đường dẫn trong database (posts.image column)
+3. Verify file tồn tại: vào MySQL Data tab query `SELECT id, title, image FROM posts;`
 
 ### ❌ Database bị reset sau mỗi deploy
 
-**Nguyên nhân:** Railway free plan không persist data (tùy thuộc vào cách cấu hình)
+**Nguyên nhân:** Railway MySQL service có persistent volume riêng
 
 **Giải pháp:**
-Railway MySQL service có **persistent volume** tự động. Chỉ khi bạn **xóa MySQL service** thì mất data.
+- Railway MySQL service data **KHÔNG bị mất** khi redeploy web service
+- Chỉ mất khi **XÓA MySQL SERVICE**
+- Web service code thay đổi không ảnh hưởng database
 
-### ⚠️ Website chạy nhưng không có dữ liệu
+### ⚠️ Website chạy nhưng không có dữ liệu/bài đăng
 
-**Nguyên nhân:** Schema chưa được import
+**Nguyên nhân:** 
+- Chưa có user đăng ký
+- Chưa có bài đăng nào được approved
 
 **Giải pháp:**
-```bash
-# Sử dụng Railway CLI
-railway connect MySQL
+1. Login với admin account
+2. Đăng ký user thường và tạo bài đăng
+3. Admin approve bài đăng tại `/admin/manage_posts.php`
+4. Bài đăng sẽ hiển thị trên trang chủ
 
-# Sau đó import
-mysql -h [host] -u [user] -p[password] [database] < schema.sql
-```
+### ❌ Lỗi "Database schema error" trong logs
+
+**Nguyên nhân:**
+- MySQL chưa sẵn sàng 100% khi web service start
+- PHP script chạy quá sớm
+
+**Giải pháp:**
+- Script có logic retry: "Will retry when Apache starts..."
+- Đợi thêm vài phút để MySQL stable
+- Redeploy nếu cần
+
+### ❌ Port/Apache configuration errors
+
+**Nguyên nhân:**
+- Railway tự động set biến `PORT`
+- docker-entrypoint.sh configure Apache listen port
+
+**Giải pháp:**
+- Không cần lo lắng về warning "Could not reliably determine server's fully qualified domain name"
+- Railway tự động expose đúng port
+- Check Deploy Logs có "Configuring Apache to listen on port..."
 
 ---
 
@@ -402,45 +501,128 @@ git push origin main
 ### 🔒 Bảo mật
 
 1. **Đổi password admin ngay sau khi deploy**
-2. **Không commit file `.env` lên GitHub**
-3. **Sử dụng mật khẩu mạnh cho ADMIN_PASS**
-4. **Giới hạn quyền MySQL user** (chỉ cho quyền cần thiết)
+   - Login với password từ `ADMIN_PASS`
+   - Vào Profile → đổi mật khẩu
+   
+2. **Sử dụng mật khẩu mạnh cho ADMIN_PASS**
+   - Ít nhất 12 ký tự
+   - Bao gồm chữ hoa, chữ thường, số, ký tự đặc biệt
+   
+3. **Không commit file chứa secrets**
+   - Không push `.env` lên GitHub
+   - Dùng `.gitignore` để exclude
+   
+4. **Giới hạn quyền MySQL user** 
+   - Railway tạo user với quyền đầy đủ cho database riêng
+   - An toàn vì isolated per project
 
 ### 📊 Monitoring
 
-1. **Railway Dashboard** → tab "Metrics" để xem:
+1. **Railway Dashboard → Metrics**
    - CPU usage
    - Memory usage
    - Network traffic
+   - Disk usage (cho uploads)
 
-2. **Logs** → tab "Deploy Logs" để debug
+2. **Logs**
+   - **Deploy Logs:** Xem quá trình build và setup
+   - **App Logs:** Runtime errors, PHP errors, Apache logs
+   - Filter theo severity: Error, Warning, Info
+
+3. **Database Monitoring**
+   - MySQL service → Metrics
+   - Connections, queries, storage
 
 ### 💰 Quản lý Resource (500 giờ/tháng miễn phí)
 
-- 1 project luôn chạy = ~720 giờ/tháng → vượt quota
-- **Giải pháp:** 
-  - Tắt service khi không dùng
-  - Hoặc upgrade plan ($5/tháng)
-  - Hoặc deploy nhiều project khác nhau
+- **1 web service + 1 MySQL luôn chạy** = ~1440 giờ/tháng → **vượt quota**
+- **Giải pháp:**
+  - **Option 1:** Tắt service khi không dùng (Development mode)
+  - **Option 2:** Upgrade plan ($5/tháng cho unlimited hours + 512MB RAM)
+  - **Option 3:** Sleep/wake theo schedule (Railway Pro feature)
+  
+### 🚀 Performance Tips
+
+1. **Enable PHP OPcache** (thêm vào Dockerfile nếu cần):
+   ```dockerfile
+   RUN docker-php-ext-install opcache
+   ```
+
+2. **Optimize uploads:**
+   - Resize images trước khi save
+   - Compress images (JPEG quality 80-85%)
+   - Limit file size trong upload validation
+
+3. **Database indexing:**
+   - Schema đã có indexes trên foreign keys
+   - Thêm index cho `posts.post_status` nếu cần:
+     ```sql
+     CREATE INDEX idx_post_status ON posts(post_status);
+     ```
 
 ### 🌐 Custom Domain (Optional)
 
 Nếu có domain riêng (ví dụ: `leaf.yourdomain.com`):
 
-1. Tab Settings → Custom Domains
-2. Thêm domain
-3. Config CNAME record ở nhà cung cấp domain:
+1. **Railway Dashboard:**
+   - Service Settings → Networking → Custom Domains
+   - Thêm domain của bạn
+
+2. **DNS Configuration (ở nhà cung cấp domain):**
    ```
-   CNAME: leaf.yourdomain.com → [railway-domain]
+   CNAME: leaf.yourdomain.com → [railway-generated-domain].up.railway.app
    ```
+
+3. **SSL Certificate:**
+   - Railway tự động provision Let's Encrypt SSL
+   - HTTPS enabled by default
+
+### 🔄 CI/CD Best Practices
+
+1. **Automatic deployment:**
+   - Railway tự động deploy khi push lên GitHub
+   - Configure deployment branch trong Settings
+
+2. **Healthcheck:**
+   - Railway tự động check nếu service respond
+   - Có thể config custom healthcheck endpoint
+
+3. **Rollback:**
+   - Deployments tab → click vào deployment cũ → Redeploy
+   - Instant rollback đến version trước
+
+### 📦 Backup Strategy
+
+1. **Database backup:**
+   - Railway không auto backup trong free plan
+   - Manual backup: MySQL Data tab → Export data
+   - Hoặc dùng `mysqldump` qua Railway CLI
+
+2. **Uploads backup:**
+   - Downloads files từ persistent volume
+   - Railway CLI: `railway run` rồi copy files
+
+3. **Scheduled backups:**
+   - Chạy cron job trên máy local
+   - Script backup database định kỳ
 
 ---
 
 ## 📚 Tài liệu tham khảo
 
-- Railway Docs: https://docs.railway.app
-- Railway MySQL: https://docs.railway.app/databases/mysql
-- Railway CLI: https://docs.railway.app/develop/cli
+- **Railway Official Docs:** https://docs.railway.app
+- **Railway MySQL Database:** https://docs.railway.app/databases/mysql
+- **Railway CLI:** https://docs.railway.app/develop/cli
+- **Railway Environment Variables:** https://docs.railway.app/develop/variables
+- **Railway Networking:** https://docs.railway.app/deploy/networking
+
+### Các file quan trọng trong project
+
+- **`docker-entrypoint.sh`:** Auto setup script (schema import, admin creation, Apache config)
+- **`config/database.php`:** Database connection với MYSQL_URL parsing support
+- **`seed_admin.php`:** Admin user creation từ environment variables
+- **`schema.sql`:** Database schema với 3 tables (users, posts, orders)
+- **`.env.example`:** Template cho environment variables
 
 ---
 
@@ -448,11 +630,29 @@ Nếu có domain riêng (ví dụ: `leaf.yourdomain.com`):
 
 Nếu gặp vấn đề:
 
-1. **Kiểm tra Railway logs** (Deploy Logs + App Logs)
-2. **Xem MySQL logs** (MySQL service → Logs)
-3. **GitHub Issues:** https://github.com/dangbh01/leaf/issues
-4. **Railway Discord:** https://discord.gg/railway
+1. **Kiểm tra Railway logs:**
+   - Deploy Logs (setup và build process)
+   - App Logs (runtime errors)
+   - MySQL Logs (database issues)
+
+2. **Check database:**
+   - MySQL service → Data tab
+   - Query tables để verify data
+
+3. **Common issues:**
+   - Connection errors → Check MySQL running và biến env đúng
+   - Schema errors → Verify schema.sql imported
+   - Admin login fails → Check ADMIN_PASS và query users table
+   - Upload errors → Check uploads directory permissions trong logs
+
+4. **GitHub Issues:** https://github.com/dangbh01/leaf/issues
+
+5. **Railway Community:**
+   - Railway Discord: https://discord.gg/railway
+   - Railway Forum: https://help.railway.app
 
 ---
 
 **🎉 Chúc bạn deploy thành công! 🚀**
+
+Nếu có thắc mắc hoặc gặp lỗi không có trong troubleshooting, tạo issue trên GitHub hoặc hỏi trong Railway Discord.
