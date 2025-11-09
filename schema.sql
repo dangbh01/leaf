@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS users (
   full_name VARCHAR(255),
   phone VARCHAR(50),
   facebook_link VARCHAR(255),
+  homeroom_teacher VARCHAR(255),
+  class VARCHAR(100),
   role VARCHAR(50) DEFAULT 'user',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
