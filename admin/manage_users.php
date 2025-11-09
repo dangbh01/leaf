@@ -12,7 +12,7 @@ if (isset($_POST['update_role'])) {
     $user_id = $_POST['user_id'];
     $new_role = $_POST['role'];
     // Ngăn người dùng tự hạ role của chính họ
-    if (isset($_SESSION['user_id']) && $user_id == $_SESSION['user_id']) {
+    if (isset($_SESSION['user_id']) && (string)$user_id === (string)$_SESSION['user_id']) {
         echo "<script>alert('Bạn không thể thay đổi vai trò của chính mình.'); window.location.href = 'manage_users.php';</script>";
         exit;
     }
@@ -148,7 +148,7 @@ if (isset($_POST['update_role'])) {
                                             </td>
                                             <td><?php echo date('d/m/Y', strtotime($user['created_at'])); ?></td>
                                             <td>
-                                                <?php if ($user['id'] == $_SESSION['user_id']): ?>
+                                                <?php if ((string)$user['id'] === (string)$_SESSION['user_id']): ?>
                                                     <div class="d-flex flex-column">
                                                         <span class="badge bg-secondary"><?php echo $user['role']; ?></span>
                                                         <small class="text-muted">Không thể thay đổi vai trò của chính bạn</small>

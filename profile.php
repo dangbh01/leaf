@@ -177,7 +177,7 @@ if($_POST) {
                         <div class="card-body">
                             <h5 class="card-title">🛒 Đơn đã nhận</h5>
                             <?php
-                            $sql_orders = "SELECT COUNT(*) as total_orders FROM orders WHERE buyer_id = ?";
+                            $sql_orders = "SELECT COUNT(*) as total_orders FROM orders WHERE user_id = ?";
                             $stmt_orders = $pdo->prepare($sql_orders);
                             $stmt_orders->execute([$user_id]);
                             $total_orders = $stmt_orders->fetch()['total_orders'];
