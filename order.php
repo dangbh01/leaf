@@ -11,7 +11,7 @@ if(!isset($_SESSION['user_id'])) {
 // Kiểm tra nếu có post_id được gửi đến
 if(isset($_GET['post_id'])) {
     $post_id = $_GET['post_id'];
-    $buyer_id = $_SESSION['user_id'];
+    $user_id = $_SESSION['user_id'];
     
     // Kiểm tra xem bài đăng có tồn tại không
     $sql = "SELECT * FROM posts WHERE id = ? AND post_status = 'approved'";
@@ -25,9 +25,9 @@ if(isset($_GET['post_id'])) {
     }
     
     // Kiểm tra xem user đã đặt nhận bài này chưa
-    $sql = "SELECT * FROM orders WHERE post_id = ? AND buyer_id = ?";
+    $sql = "SELECT * FROM orders WHERE post_id = ? AND user_id = ?";
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([$post_id, $buyer_id]);
+    $stmt->execute([$post_id, $user_id]);
     $existing_order = $stmt->fetch();
     
     if($existing_order) {
@@ -36,12 +36,12 @@ if(isset($_GET['post_id'])) {
     }
     
     // Tạo đơn đặt nhận
-    $sql = "INSERT INTO orders (post_id, buyer_id, message) VALUES (?, ?, ?)";
+    $sql = "INSERT INTO orders (post_id, user_id, message) VALUES (?, ?, ?)";
     $stmt = $pdo->prepare($sql);
     
     $message = "Tôi muốn đặt nhận sản phẩm này";
     
-    if($stmt->execute([$post_id, $buyer_id, $message])) {
+    if($stmt->execute([$post_id, $user_id, $message])) {
         echo "<script>alert('Đặt nhận thành công! Người đăng sẽ liên hệ với bạn.'); window.location='index.php';</script>";
     } else {
         echo "<script>alert('Lỗi đặt nhận! Vui lòng thử lại.'); window.location='index.php';</script>";
