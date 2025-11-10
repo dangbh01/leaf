@@ -14,7 +14,7 @@ $sql = "SELECT orders.*, posts.title, posts.image, posts.type, posts.price, user
         FROM orders 
         JOIN posts ON orders.post_id = posts.id
         JOIN users ON posts.user_id = users.id
-        WHERE orders.buyer_id = ?
+        WHERE orders.user_id = ?
         ORDER BY orders.created_at DESC";
 $stmt = $pdo->prepare($sql);
 $stmt->execute([$user_id]);

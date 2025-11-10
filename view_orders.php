@@ -29,7 +29,7 @@ if(!$post) {
 // Lấy danh sách đơn đặt cho bài đăng này
 $sql = "SELECT orders.*, users.full_name, users.username, users.email, users.phone 
         FROM orders 
-        JOIN users ON orders.buyer_id = users.id 
+        JOIN users ON orders.user_id = users.id 
         WHERE orders.post_id = ? 
         ORDER BY orders.created_at DESC";
 $stmt = $pdo->prepare($sql);
@@ -134,7 +134,7 @@ if(isset($_POST['action'])) {
     // Lấy thông tin Facebook từ bảng users
     $sql_fb = "SELECT facebook_link FROM users WHERE id = ?";
     $stmt_fb = $pdo->prepare($sql_fb);
-    $stmt_fb->execute([$order['buyer_id']]);
+    $stmt_fb->execute([$order['user_id']]);
     $user_info = $stmt_fb->fetch();
     ?>
     
