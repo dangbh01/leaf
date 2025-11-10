@@ -20,12 +20,12 @@ if(isset($_POST['action'])) {
         $sql = "UPDATE posts SET post_status = 'approved' WHERE id = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$post_id]);
-        echo "<script>alert('Đã duyệt bài đăng!'); window.location.reload();</script>";
+        echo "<script>alert('Đã duyệt bài đăng!'); window.location='manage_posts.php';</script>";
     } elseif($action == 'reject') {
         $sql = "UPDATE posts SET post_status = 'rejected' WHERE id = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$post_id]);
-        echo "<script>alert('Đã từ chối bài đăng!'); window.location.reload();</script>";
+        echo "<script>alert('Đã từ chối bài đăng!'); window.location='manage_posts.php';</script>";
     }
 }
 ?>
