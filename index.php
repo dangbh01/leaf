@@ -58,6 +58,9 @@ if(isset($_SESSION['user_id'])) {
                     <a class="nav-link" href="profile.php">
                         <i class="fas fa-user"></i> <?php echo $_SESSION['username']; ?>
                     </a>
+                    <a class="nav-link" href="search.php">
+                        <i class="fas fa-search"></i> Tìm kiếm
+                    </a>
                     <a class="nav-link" href="my_posts.php">
                         <i class="fas fa-list"></i> Bài đăng của tôi
                     </a>
@@ -76,6 +79,9 @@ if(isset($_SESSION['user_id'])) {
                 <?php else: ?>
                     <a class="nav-link" href="register.php">Đăng ký</a>
                     <a class="nav-link" href="login.php">Đăng nhập</a>
+                    <a class="nav-link" href="search.php">
+                        <i class="fas fa-search"></i> Tìm kiếm
+                    </a>
                 <?php endif; ?>
 
                 <!-- MENU CHO TẤT CẢ MỌI NGƯỜI -->
